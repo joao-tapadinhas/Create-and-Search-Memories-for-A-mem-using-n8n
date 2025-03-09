@@ -1,0 +1,228 @@
+{
+  "name": "🛠️ Tool Remove Irrelevant Sections",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0cba5868-a1b0-4bb1-814d-4c628d77f663",
+              "name": "data",
+              "value": "={{ $json.data.map(subItem => `ItemIndex: ${subItem.itemIndex}\\nItemTitle: ${subItem.itemTitle}\\nContentText:\\n${subItem.contentText}`).join(\"\\n\\n---\\n\\n\") }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d9383bdc-79c1-4642-9241-cbeb1a5482ef",
+      "name": "AI Prompt Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        280,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9e18ceda-0937-4491-84a2-e022536e2676",
+      "name": "Flow Input"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=**You are the Content Quality Manager for a blog site.** Your task is to review an article and identify any sections (blocks of text) that are **not part of the main article flow**.\n\n### Irrelevant Blocks Include:\n\n- Calls to action (e.g., prompts to read other articles)\n- Bibliographies, citations, appendices, article metadata\n- Links to other articles\n- Options to like, evaluate, or save the article\n- Sections that disrupt the flow or are not part of the main narrative\n\n### Guidelines:\n\n- **Do not remove blocks with relevant content**, even if they include some irrelevant parts. **Instead, remove the irrelevant parts and keep the relevant content**.\n- Prioritize keeping the main content intact.\n- Links, citations, or other elements within the main content should be kept if they contribute to the article.\n- If a block contains both irrelevant and relevant content (e.g., a table of contents followed by the introduction), **correct the block by removing the irrelevant parts**.\n- Focus more on the `ContentText` than the `ItemTitle` when deciding.\n- Blocks with an `ItemTitle` but no `ContentText`, or with a very short `ContentText`, **should not be removed**.\n- When in doubt, **do not remove** a block.\n\n### Article Format:\n\nEach section is formatted as:\n\n```\nItemIndex: [Number]\nItemTitle: [Title of the Section]\nContentText:\n[Content of the Section]\n```\n\n### Instructions:\n\n1. **List the `ItemIndex` values of irrelevant blocks that can be removed without affecting the core content.**\n2. **For blocks with both relevant and irrelevant content, remove the irrelevant parts and provide the corrected `ContentText`.**\n3. Output the results in JSON format:\n\n```json\n{\n  \"itemRemoveIndexes\": [ItemIndex values],\n  \"itemsCorrected\": {\n    \"ItemIndex\": \"Corrected ContentText\",\n    ...\n  }\n}\n```\n\n---\n\n**Input Article:**\n\n---\n\n{{ $json.data }}\n\n---",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "id": "9caf8ba4-a6f7-481c-acb4-f337604ef95e",
+      "name": "Identify Irrelevant Content Blocks",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        560,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"itemRemoveIndexes\": [3, 8, 12, 13],\n  \"itemsCorrected\": {\n    \"1\": \"Corrected ContentText1\",\n    \"7\": \"Corrected ContentText7\"\n  }\n}"
+      },
+      "id": "cf080805-9dd4-4a0a-8ace-dac61c3c630f",
+      "name": "Items to Fix and Remove",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        760,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o",
+        "options": {
+          "maxRetries": 2
+        }
+      },
+      "id": "8338ddc4-e15c-4195-a354-36f542737874",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        540,
+        200
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "EPkkHfMeirksgRsV",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7b72e2fc-9586-4608-9583-f55786289ba3",
+              "name": "data",
+              "value": "={{ $json.data\n  .filter(item => !$json.itemRemoveIndexes.includes(item.itemIndex))\n  .map(item => {\n    if ($json.itemsCorrected[item.itemIndex]) {\n      item.contentText = $json.itemsCorrected[item.itemIndex];\n    }\n    return item;\n  })\n}}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1200,
+        0
+      ],
+      "id": "febc1768-0da0-42e7-a71b-6b9bad049810",
+      "name": "Fix and Filter Irrelevant Blocks"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c51f7c8f-3022-4fcf-97aa-0fbd76807e72",
+              "name": "itemRemoveIndexes",
+              "value": "={{ $json.output.itemRemoveIndexes }}",
+              "type": "array"
+            },
+            {
+              "id": "86775d4c-e64e-4b83-aff5-8f7e0a252726",
+              "name": "itemsCorrected",
+              "value": "={{ $json.output.itemsCorrected }}",
+              "type": "object"
+            },
+            {
+              "id": "b612aa34-9dc7-4e55-9a5c-6df8ff477da8",
+              "name": "data",
+              "value": "={{ $('Flow Input').item.json.data }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c006d27e-f702-4659-8e81-b0eb58a0c270",
+      "name": "Data for Fix and Filter",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        980,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Prompt Data": {
+      "main": [
+        [
+          {
+            "node": "Identify Irrelevant Content Blocks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flow Input": {
+      "main": [
+        [
+          {
+            "node": "AI Prompt Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Identify Irrelevant Content Blocks": {
+      "main": [
+        [
+          {
+            "node": "Data for Fix and Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Items to Fix and Remove": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Identify Irrelevant Content Blocks",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Identify Irrelevant Content Blocks",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data for Fix and Filter": {
+      "main": [
+        [
+          {
+            "node": "Fix and Filter Irrelevant Blocks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "21ab6671-4b91-4efd-8121-cd8081830fb3",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "558d88703fb65b2d0e44613bc35916258b0f0bf983c5d4730c00c424b77ca36a"
+  },
+  "id": "kkETwax6b61uV2ec",
+  "tags": []
+}
