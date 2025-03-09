@@ -1,7 +1,7 @@
 # Create and Search Memories for A-Mem using n8n
 
 ## Overview
-This repository contains an n8n application consisting of two workflows: a main workflow and a sub-workflow. The main workflow extracts sections of text from a web URL or a PDF and stores them as memories in A-Mem, with AI-generated tags for better organization and retrieval.
+This repository contains an n8n application consisting of two workflows: a main workflow (Section_loading_to_A_mem.json) and a sub-workflow(Tool_Remove_Irrelevant_Sections.json). The main workflow extracts sections of text from a web URL or a PDF and stores them as memories in A-Mem, with AI-generated tags for better organization and retrieval.
 
 ## Setup Instructions
 
@@ -43,19 +43,24 @@ docker run -d --name amem-container --network n8n-network -p 9000:9000 amem-api
 Navigate to the `self-hosted-ai-starter-kit` directory and build the n8n container:
 ```sh
 cd self-hosted-ai-starter-kit
-docker build -t my-custom-n8n .
+docker build -t n8n-image .
 ```
 Run the n8n container and connect it to the network:
 ```sh
 docker run -d --name n8n --network n8n-network -p 5678:5678 n8n-image
 ```
 
-### 2. Verify HTTP Node URLs in n8n
+### 2. Import Workflows into n8n
+Before verifying HTTP node URLs, import the following workflows into n8n:
+- **Section_loading_to_A_mem.json**
+- **Tool_Remove_Irrelevant_Sections.json**
+
+### 3. Verify HTTP Node URLs in n8n
 After importing the workflow, ensure that:
 - The **A-Mem API HTTP node** has the correct URL (`http://amem-container:9000/memories`).
 - The **Convert File HTTP node** has the correct URL for Docling (`http://docling-api:8081/process`).
 
-### 3. Configure Google Drive Credentials
+### 4. Configure Google Drive Credentials
 If processing Google Drive links, set up Google Drive credentials in n8n and apply them to relevant nodes.
 
 ## Usage
