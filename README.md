@@ -69,4 +69,31 @@ If processing Google Drive links, set up Google Drive credentials in n8n and app
 
 ---
 
+## Keeping This Fork in Sync with the Original Repository
 
+This is a fork of [Abdullah's repository](https://github.com/abdullah91111/Create-and-Search-Memories-for-A-mem-using-n8n). To keep it in sync with the original repository:
+
+### Using GitHub's Web Interface
+
+1. Navigate to this fork on GitHub
+2. Click on "Sync fork" button (located above the file list)
+3. Click "Update branch" to sync with the original repository
+
+### Using Git Commands
+
+If you've cloned this repository locally:
+
+1. Add the original repository as an upstream remote:
+   ```bash
+   git remote add upstream https://github.com/abdullah91111/Create-and-Search-Memories-for-A-mem-using-n8n.git
+   ```
+
+2. Fetch and merge changes:
+   ```bash
+   git fetch upstream
+   git checkout main
+   git merge upstream/main
+   git push origin main
+   ```
+
+For more detailed instructions on keeping your fork in sync, see [GitHub's documentation](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork).
